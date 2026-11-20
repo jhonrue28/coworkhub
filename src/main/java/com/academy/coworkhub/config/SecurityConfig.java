@@ -15,7 +15,9 @@ public class SecurityConfig {
         return http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/actuator/health", "/doc/**", "/v3/api-docs/**").permitAll()
+                        .requestMatchers("/actuator/health", "/doc/**", "/v3/api-docs/**", "/error").permitAll()
+                        // shortcut: API abierta para probar las fases 3-6 sin usuarios; se cierra en la fase 7
+                        .requestMatchers("/api/**").permitAll()
                         .anyRequest().authenticated())
                 .httpBasic(Customizer.withDefaults())
                 .build();
