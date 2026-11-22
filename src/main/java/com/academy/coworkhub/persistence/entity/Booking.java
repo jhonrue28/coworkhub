@@ -35,16 +35,16 @@ public class Booking {
     private BookingStatus status = BookingStatus.PENDING;
 
     @Column(nullable = false, precision = 10, scale = 2)
-    private BigDecimal roomCost = BigDecimal.ZERO;
+    private BigDecimal roomCost = new BigDecimal("0.00");
 
     @Column(nullable = false, precision = 10, scale = 2)
-    private BigDecimal servicesCost = BigDecimal.ZERO;
+    private BigDecimal servicesCost = new BigDecimal("0.00");
 
     @Column(nullable = false, precision = 10, scale = 2)
-    private BigDecimal totalCost = BigDecimal.ZERO;
+    private BigDecimal totalCost = new BigDecimal("0.00");
 
     @Column(nullable = false, precision = 10, scale = 2)
-    private BigDecimal cancellationFee = BigDecimal.ZERO;
+    private BigDecimal cancellationFee = new BigDecimal("0.00");
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "room_id", nullable = false)

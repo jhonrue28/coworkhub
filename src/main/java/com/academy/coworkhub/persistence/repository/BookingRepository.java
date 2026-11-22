@@ -35,4 +35,8 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     boolean existsByRoomId(Long roomId);
 
     boolean existsByMemberId(Long memberId);
+
+    // RF-03: reservas activas de una sede que se cruzan con el rango pedido
+    List<Booking> findByRoom_Location_IdAndStatusInAndStartTimeLessThanAndEndTimeGreaterThan(
+            Long locationId, Collection<BookingStatus> statuses, LocalDateTime end, LocalDateTime start);
 }

@@ -1,15 +1,20 @@
 package com.academy.coworkhub.presentation.controller;
 
+import com.academy.coworkhub.business.service.BookingService;
 import com.academy.coworkhub.business.service.MemberService;
 import com.academy.coworkhub.persistence.entity.MemberStatus;
 import com.academy.coworkhub.presentation.dto.request.MemberCreateRequest;
 import com.academy.coworkhub.presentation.dto.request.MemberUpdateRequest;
+import com.academy.coworkhub.presentation.dto.response.ConsumptionResponse;
 import com.academy.coworkhub.presentation.dto.response.MemberResponse;
 import jakarta.validation.Valid;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Clock;
+import java.time.YearMonth;
 import java.util.List;
 
 @RestController
@@ -17,9 +22,13 @@ import java.util.List;
 public class MemberController {
 
     private final MemberService memberService;
+    private final BookingService bookingService;
+    private final Clock clock;
 
-    public MemberController(MemberService memberService) {
+    public MemberController(MemberService memberService, BookingService bookingService, Clock clock) {
         this.memberService = memberService;
+        this.bookingService = bookingService;
+        this.clock = clock;
     }
 
     @GetMapping
@@ -58,5 +67,12 @@ public class MemberController {
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         memberService.delete(id);
         return ResponseEntity.ok().build();
+    }
+
+    /** RF-10. Sin ?mes= devuelve el mes actual. */
+    @GetMapping("/{id}/consumo")
+    public ConsumptionResponse consumption(@PathVariable Long id,
+                                           @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM") YearMonth mes) {
+        return bookingService.getConsumption(id, mes != null ? mes : YearMonth.now(clock));
     }
 }
