@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
@@ -116,10 +117,13 @@ public class GlobalExceptionHandler {
 
     // ---------------------------------------------------------------- 403 / 405 / 500
 
-    /** Sin credenciales o con credenciales inválidas; llega desde el AuthenticationEntryPoint. */
+    /** Login fallido, o token ausente, alterado o vencido (llega desde el AuthenticationEntryPoint). */
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<ErrorResponse> unauthenticated(AuthenticationException e) {
-        return build(HttpStatus.UNAUTHORIZED, "Se requiere autenticación válida", ErrorResponse.UNAUTHORIZED);
+        String message = e instanceof BadCredentialsException
+                ? "Usuario o contraseña incorrectos"
+                : "Se requiere un token válido";
+        return build(HttpStatus.UNAUTHORIZED, message, ErrorResponse.UNAUTHORIZED);
     }
 
     /** Lo lanza @PreAuthorize dentro del controlador o el AccessDeniedHandler. */

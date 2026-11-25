@@ -62,6 +62,12 @@ public class OpenApiConfig {
     }
 
     @Bean
+    public GroupedOpenApi authApi() {
+        return GroupedOpenApi.builder().group("autenticacion").displayName("Autenticación")
+                .pathsToMatch("/auth/**").build();
+    }
+
+    @Bean
     public GroupedOpenApi catalogApi() {
         return GroupedOpenApi.builder().group("catalogos").displayName("Catálogos")
                 .pathsToMatch("/api/sedes/**", "/api/salas/**", "/api/equipamientos/**",
