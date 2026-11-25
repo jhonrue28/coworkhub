@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,7 +25,11 @@ import java.util.List;
 @RestController
 @Tag(name = "Miembros", description = "Clientes del coworking, su cuenta de usuario y su consumo (RF-02, RF-10)")
 @RequestMapping("/api/miembros")
+@PreAuthorize(MemberController.STAFF)
 public class MemberController {
+
+    static final String STAFF = "hasAnyRole('ADMIN','RECEPTIONIST')";
+    static final String STAFF_OR_SELF = STAFF + " or @ownership.isMember(#id)";
 
     private final MemberService memberService;
     private final BookingService bookingService;
@@ -44,6 +49,7 @@ public class MemberController {
     }
 
     @Operation(summary = "Consulta un miembro", description = "Acceso: ADMIN y RECEPTIONIST. Un MEMBER solo puede consultar el suyo.")
+    @PreAuthorize(STAFF_OR_SELF)
     @GetMapping("/{id}")
     public MemberResponse findById(@PathVariable Long id) {
         return memberService.findById(id);
@@ -82,7 +88,7 @@ public class MemberController {
     }
 
     @Operation(summary = "Consumo mensual de horas", description = "Acceso: ADMIN y RECEPTIONIST. Un MEMBER solo puede consultar el suyo. Horas incluidas en el plan, usadas (reservas PENDING, CONFIRMED y COMPLETED del mes), restantes y excedentes. Sin ?mes= usa el mes actual.")
-    /** RF-10. Sin ?mes= devuelve el mes actual. */
+    @PreAuthorize(STAFF_OR_SELF)
     @GetMapping("/{id}/consumo")
     public ConsumptionResponse consumption(@PathVariable Long id,
                                            @Parameter(description = "Mes (yyyy-MM); por defecto, el actual", example = "2030-06", schema = @Schema(type = "string")) @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM") YearMonth mes) {

@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -115,7 +116,13 @@ public class GlobalExceptionHandler {
 
     // ---------------------------------------------------------------- 403 / 405 / 500
 
-    /** Lo lanza @PreAuthorize dentro del controlador (fase 7). */
+    /** Sin credenciales o con credenciales inválidas; llega desde el AuthenticationEntryPoint. */
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ErrorResponse> unauthenticated(AuthenticationException e) {
+        return build(HttpStatus.UNAUTHORIZED, "Se requiere autenticación válida", ErrorResponse.UNAUTHORIZED);
+    }
+
+    /** Lo lanza @PreAuthorize dentro del controlador o el AccessDeniedHandler. */
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ErrorResponse> accessDenied(AccessDeniedException e) {
         return build(HttpStatus.FORBIDDEN, "No tiene permiso para realizar esta acción", ErrorResponse.FORBIDDEN);

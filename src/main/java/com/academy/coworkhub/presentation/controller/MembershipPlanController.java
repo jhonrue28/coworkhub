@@ -6,6 +6,7 @@ import com.academy.coworkhub.presentation.dto.response.MembershipPlanResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -36,6 +37,7 @@ public class MembershipPlanController {
     }
 
     @Operation(summary = "Crea un plan", description = "Acceso: ADMIN. RN-11: el nombre es único.")
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public MembershipPlanResponse create(@Valid @RequestBody MembershipPlanRequest request) {
@@ -43,12 +45,14 @@ public class MembershipPlanController {
     }
 
     @Operation(summary = "Actualiza un plan", description = "Acceso: ADMIN. RN-11: el nombre es único.")
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     public MembershipPlanResponse update(@PathVariable Long id, @Valid @RequestBody MembershipPlanRequest request) {
         return planService.update(id, request);
     }
 
     @Operation(summary = "Elimina un plan", description = "Acceso: ADMIN. RN-12: no se elimina un plan con miembros. Responde 200 sin cuerpo.")
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         planService.delete(id);

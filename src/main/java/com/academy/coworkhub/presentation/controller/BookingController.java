@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +23,9 @@ import java.util.List;
 @RequestMapping("/api/reservas")
 public class BookingController {
 
+    private static final String STAFF = "hasAnyRole('ADMIN','RECEPTIONIST')";
+    private static final String STAFF_OR_OWNER = STAFF + " or @ownership.isBookingOwner(#id)";
+
     private final BookingService bookingService;
 
     public BookingController(BookingService bookingService) {
@@ -29,6 +33,7 @@ public class BookingController {
     }
 
     @Operation(summary = "Crea una reserva", description = "Acceso: ADMIN, RECEPTIONIST y MEMBER (solo a su nombre). Queda PENDING y devuelve el costo calculado (RN-07). Valida RN-01 a RN-06.")
+    @PreAuthorize(STAFF + " or @ownership.isMember(#request.miembroId())")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public BookingResponse create(@Valid @RequestBody BookingRequest request) {
@@ -36,12 +41,14 @@ public class BookingController {
     }
 
     @Operation(summary = "Consulta una reserva", description = "Acceso: ADMIN, RECEPTIONIST y MEMBER (solo si es suya).")
+    @PreAuthorize(STAFF_OR_OWNER)
     @GetMapping("/{id}")
     public BookingResponse findById(@PathVariable Long id) {
         return bookingService.findById(id);
     }
 
     @Operation(summary = "Lista reservas con un filtro", description = "Acceso: ADMIN, RECEPTIONIST y MEMBER (solo con su propio miembroId). Use exactamente uno: ?miembroId=, ?salaId=&fecha= o ?estado=.")
+    @PreAuthorize(STAFF + " or @ownership.isMember(#miembroId)")
     @GetMapping
     public List<BookingResponse> search(@Parameter(description = "Reservas de un miembro", example = "1") @RequestParam(required = false) Long miembroId,
                                         @Parameter(description = "Reservas de una sala (junto con fecha)", example = "1") @RequestParam(required = false) Long salaId,
@@ -51,12 +58,14 @@ public class BookingController {
     }
 
     @Operation(summary = "Agrega un servicio", description = "Acceso: ADMIN, RECEPTIONIST y MEMBER (solo si es suya). Solo con la reserva PENDING (RN-10). Si el servicio ya está, suma la cantidad. Recalcula el costo.")
+    @PreAuthorize(STAFF_OR_OWNER)
     @PostMapping("/{id}/servicios")
     public BookingResponse addService(@PathVariable Long id, @Valid @RequestBody BookingItemRequest request) {
         return bookingService.addService(id, request);
     }
 
     @Operation(summary = "Quita un servicio", description = "Acceso: ADMIN, RECEPTIONIST y MEMBER (solo si es suya). Solo con la reserva PENDING (RN-10). Recalcula el costo. Responde 200 sin cuerpo.")
+    @PreAuthorize(STAFF_OR_OWNER)
     @DeleteMapping("/{id}/servicios/{servicioId}")
     public ResponseEntity<Void> removeService(@PathVariable Long id, @PathVariable Long servicioId) {
         bookingService.removeService(id, servicioId);
@@ -64,18 +73,21 @@ public class BookingController {
     }
 
     @Operation(summary = "Confirma una reserva", description = "Acceso: ADMIN y RECEPTIONIST. PENDING → CONFIRMED (RN-09).")
+    @PreAuthorize(STAFF)
     @PostMapping("/{id}/confirmar")
     public BookingResponse confirm(@PathVariable Long id) {
         return bookingService.confirm(id);
     }
 
     @Operation(summary = "Cancela una reserva", description = "Acceso: ADMIN, RECEPTIONIST y MEMBER (solo si es suya). RN-08: con 24 h o más, sin cargo; entre 24 h y 2 h, 50 % del costo de la sala; con menos de 2 h o ya empezada, 409. Devuelve el cargo en cargoCancelacion.")
+    @PreAuthorize(STAFF_OR_OWNER)
     @PostMapping("/{id}/cancelar")
     public BookingResponse cancel(@PathVariable Long id) {
         return bookingService.cancel(id);
     }
 
     @Operation(summary = "Completa una reserva", description = "Acceso: ADMIN y RECEPTIONIST. CONFIRMED → COMPLETED (RN-09).")
+    @PreAuthorize(STAFF)
     @PostMapping("/{id}/completar")
     public BookingResponse complete(@PathVariable Long id) {
         return bookingService.complete(id);

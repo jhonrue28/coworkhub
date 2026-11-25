@@ -6,6 +6,7 @@ import com.academy.coworkhub.presentation.dto.response.LocationResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -36,6 +37,7 @@ public class LocationController {
     }
 
     @Operation(summary = "Crea una sede", description = "Acceso: ADMIN. RN-11: el nombre es único.")
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public LocationResponse create(@Valid @RequestBody LocationRequest request) {
@@ -43,12 +45,14 @@ public class LocationController {
     }
 
     @Operation(summary = "Actualiza una sede", description = "Acceso: ADMIN. RN-11: el nombre es único.")
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     public LocationResponse update(@PathVariable Long id, @Valid @RequestBody LocationRequest request) {
         return locationService.update(id, request);
     }
 
     @Operation(summary = "Elimina una sede", description = "Acceso: ADMIN. RN-12: no se elimina una sede con salas. Responde 200 sin cuerpo.")
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         locationService.delete(id);

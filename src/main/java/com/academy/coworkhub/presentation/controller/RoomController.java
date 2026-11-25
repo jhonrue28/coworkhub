@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -37,6 +38,7 @@ public class RoomController {
     }
 
     @Operation(summary = "Crea una sala", description = "Acceso: ADMIN. RN-11: el nombre es único dentro de la sede.")
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public RoomResponse create(@Valid @RequestBody RoomRequest request) {
@@ -44,12 +46,14 @@ public class RoomController {
     }
 
     @Operation(summary = "Actualiza una sala", description = "Acceso: ADMIN. RN-11: el nombre es único dentro de la sede.")
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     public RoomResponse update(@PathVariable Long id, @Valid @RequestBody RoomRequest request) {
         return roomService.update(id, request);
     }
 
     @Operation(summary = "Elimina una sala", description = "Acceso: ADMIN. RN-12: no se elimina una sala con reservas. Responde 200 sin cuerpo.")
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         roomService.delete(id);
