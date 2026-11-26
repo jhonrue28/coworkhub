@@ -236,7 +236,7 @@ function crudView(cfg) {
     filterForm?.addEventListener('submit', e => { e.preventDefault(); quiet(run(reload)); });
     view.replaceChildren(
       viewHead(cfg.title, cfg.description, cfg.canCreate() && h('button', { class: 'btn primary', type: 'button', onclick: create }, `Nuevo: ${cfg.singular.toLowerCase()}`)),
-      filterForm, list);
+      ...[filterForm, list].filter(Boolean)); // replaceChildren escribiría "undefined" como texto
     await reload();
   };
 }
@@ -555,7 +555,7 @@ async function bookingsView(view) {
     viewHead(isStaff() ? 'Reservas' : 'Mis reservas',
       isStaff() ? 'Confirma las pendientes, completa las que ya ocurrieron y cancela cuando haga falta.' : 'Tus reservas, de la más próxima a la más lejana.',
       h('button', { class: 'btn primary', type: 'button', onclick: () => bookingDialog({}, () => quiet(reload())) }, 'Nueva reserva')),
-    filters, list);
+    ...[filters, list].filter(Boolean)); // replaceChildren escribiría "null" como texto
   await reload();
 }
 

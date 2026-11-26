@@ -378,9 +378,10 @@ con **15 comprobaciones y 0 fallos**:
 
 ![Panel del miembro con su consumo](docs/evidencias/05-panel-miembro.png)
 
-**6. Regla de negocio en acción.** 
+**6. Regla de negocio en acción.** Ana, que ya tiene las 2 reservas activas que permite su
+plan, intenta crear una tercera: el sistema la rechaza con el aviso `RN-06`.
 
-![Aviso de error RN-01](docs/evidencias/06-error-rn06.png)
+![Aviso de error RN-06](docs/evidencias/06-error-rn06.png)
 
 **7. Swagger.**
 
