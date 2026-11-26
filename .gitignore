@@ -35,3 +35,5 @@ build/
 ### Local ###
 local.properties
 graphify-out/
+# Guía personal de estudio: no forma parte del entregable
+explicacion.md

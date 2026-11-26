@@ -1,5 +1,6 @@
 package com.academy.coworkhub.config;
 
+import com.academy.coworkhub.presentation.controller.AuthController;
 import com.academy.coworkhub.presentation.dto.response.ErrorResponse;
 import io.swagger.v3.core.converter.ModelConverters;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
@@ -20,6 +21,7 @@ import org.springdoc.core.models.GroupedOpenApi;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -103,11 +105,17 @@ public class OpenApiConfig {
     @Bean
     public GlobalOperationCustomizer errorResponsesCustomizer() {
         return (operation, handlerMethod) -> {
+            // /auth no sigue las reglas generales (el login es público y no escribe): documenta sus respuestas a mano
+            if (handlerMethod.getBeanType() == AuthController.class) {
+                return operation;
+            }
             boolean secured = operation.getSecurity() == null || !operation.getSecurity().isEmpty();
             boolean readsInput = hasParameter(handlerMethod, RequestBody.class)
                     || hasParameter(handlerMethod, RequestParam.class)
                     || hasParameter(handlerMethod, PathVariable.class);
-            boolean write = !handlerMethod.hasMethodAnnotation(GetMapping.class);
+            // Los PATCH (suspender/activar miembro) solo cambian el estado: no rompen ninguna regla, no hay 409
+            boolean write = !handlerMethod.hasMethodAnnotation(GetMapping.class)
+                    && !handlerMethod.hasMethodAnnotation(PatchMapping.class);
 
             if (readsInput) {
                 addError(operation, "400", "Datos faltantes o con formato inválido",

@@ -1,25 +1,32 @@
 # Plan de desarrollo — CoWorkHub
 
-> Comparación entre lo que pide `requerimientos.md` y el estado actual del proyecto, y fases para cerrar la brecha.
-> Cada fase termina con **un commit** (entregable 8.1).
+> Comparación entre lo que pide `requerimientos.md` y el estado del proyecto, y fases para cerrar la brecha.
+> Cada fase termina con **un commit** (entregable 8.1). **Estado: fases 1 a 9 terminadas.**
 
 ---
 
-## 0. Estado actual (diagnóstico)
+## 0. Estado actual
 
-| Área | Estado | Observación |
+> Actualizado al terminar la fase 9. El diagnóstico inicial (antes de la fase 1) era: solo existía
+> `CoworkhubApplication`, sin git, sin `import.sql`, sin seguridad propia ni Swagger configurado.
+
+| Área | Estado | Dónde |
 |---|---|---|
-| Proyecto base (Initializr, Java 21, Boot 4.1.3, Maven) | ✅ Hecho | `pom.xml` correcto. |
-| Starters: web, JPA, validation, security, actuator, springdoc, MySQL, Lombok | ✅ Hecho | Están todas las dependencias principales. |
-| Dependencia para JWT | ❌ Falta | Agregar `spring-boot-starter-oauth2-resource-server` (trae Nimbus para firmar y validar JWT, sin librerías de terceros). |
-| MySQL en Docker (`coworkhub-mysql`, puerto 3306) | ✅ Corriendo | Verificado con `docker ps`. |
-| `application.properties` | ⚠️ Parcial | Puerto **8084** (8080 está ocupado en el equipo; se documenta en el README). `ddl-auto=update` → debe ser **`create`** para que se ejecute `import.sql`. La contraseña está en texto plano: pasarla a `${DB_PASSWORD:coworkhub}`. |
-| Entidades, repositorios, servicios, controladores | ❌ No existen | Solo está `CoworkhubApplication`. |
-| `import.sql` | ❌ No existe | |
-| Seguridad | ⚠️ Por defecto | Spring Security bloquea todo con un usuario generado; no hay configuración propia. |
-| Swagger | ⚠️ Solo la dependencia | Falta la configuración (`/doc/swagger-ui.html`, grupos, Authorize). |
-| Repositorio git | ❌ No inicializado | Hace falta para "un commit por fase": `git init` en la fase 1. |
-| `README.md`, `docs/openapi.json`, colección de Postman | ❌ No existen | |
+| Proyecto base (Initializr, Java 21, Boot 4.1.3, Maven) | ✅ Hecho | `pom.xml` |
+| Starters: web, JPA, validation, security, actuator, springdoc, MySQL, Lombok | ✅ Hecho | `pom.xml` |
+| Dependencia para JWT | ✅ Hecho (fase 7b) | En Boot 4 se llama `spring-boot-starter-security-oauth2-resource-server` |
+| MySQL en Docker (`coworkhub-mysql`, puerto 3306) | ✅ Corriendo | `docker ps` |
+| `application.properties` | ✅ Hecho | Puerto 8084, `ddl-auto=create`, `${DB_PASSWORD}` y `${JWT_SECRET}` |
+| Entidades, repositorios, servicios, controladores | ✅ Hecho (fases 2 a 4) | `persistence/`, `business/`, `presentation/` |
+| `import.sql` | ✅ Hecho (fase 2) | `src/main/resources/import.sql` |
+| Excepciones y cuerpo de error único | ✅ Hecho (fase 5) | `GlobalExceptionHandler` |
+| Swagger | ✅ Hecho (fase 6) | `/doc/swagger-ui.html`, grupos y Authorize |
+| Seguridad: Basic Auth y luego JWT, roles y dueño | ✅ Hecho (fases 7a y 7b) | `config/SecurityConfig`, `business/security/` |
+| Pruebas | ✅ 38 tests | `mvnw test` |
+| `README.md`, `docs/openapi.json`, colección de Postman | ✅ Hecho (fase 8) | 14 escenarios, 46 verificaciones con newman |
+| Panel web (frontend) | ✅ Hecho (fase 9) | `src/main/resources/static/` |
+| Repositorio git | ✅ Un commit por fase | `git log` |
+| Capturas de evidencia | ⏳ Pendiente | Tomarlas y guardarlas en `docs/evidencias/` (README, sección 12) |
 | `rubrica.md` | ❌ No está en el proyecto | El requerimiento la referencia; conviene conseguirla para verificar contra ella. |
 
 ---
@@ -52,15 +59,15 @@ com.academy.coworkhub
 
 ### Fase 1 — Proyecto base y configuración (módulos 01, 02)
 
-- [ ] `git init` y primer commit con el estado actual.
-- [ ] `application.properties`: `server.port=8084`, `ddl-auto=create`, contraseña por variable de entorno, `springdoc.swagger-ui.path=/doc/swagger-ui.html`, `management.endpoints.web.exposure.include=health`.
-- [ ] Propiedades propias del negocio con `@Value` (por ejemplo `coworkhub.jwt.secret`, `coworkhub.jwt.expiration-minutes=60`, `coworkhub.booking.min-advance-hours=1`).
-- [ ] `AppConfig` con `@Configuration`:
+- [x] `git init` y primer commit con el estado actual.
+- [x] `application.properties`: `server.port=8084`, `ddl-auto=create`, contraseña por variable de entorno, `springdoc.swagger-ui.path=/doc/swagger-ui.html`, `management.endpoints.web.exposure.include=health`.
+- [x] Propiedades propias del negocio con `@Value` (por ejemplo `coworkhub.jwt.secret`, `coworkhub.jwt.expiration-minutes=60`, `coworkhub.booking.min-advance-hours=1`).
+- [x] `AppConfig` con `@Configuration`:
   - `@Bean Clock clock()` → `Clock.systemDefaultZone()`.
   - `@Bean PasswordEncoder` → `BCryptPasswordEncoder`.
   - `@PostConstruct` que valide la configuración (por ejemplo, un secreto JWT de ≥ 32 bytes y una expiración > 0); si falla, la aplicación no arranca.
-- [ ] Un `@Primary` o `@Qualifier`: por ejemplo dos estrategias de `CostCalculator`, o dos `Clock` (`systemClock` como `@Primary` y otro fijo para pruebas).
-- [ ] Verificar `GET /actuator/health` → `{"status":"UP"}` (RF-15). Por ahora se permite en público con una `SecurityFilterChain` mínima.
+- [x] Un `@Primary` o `@Qualifier`: por ejemplo dos estrategias de `CostCalculator`, o dos `Clock` (`systemClock` como `@Primary` y otro fijo para pruebas).
+- [x] Verificar `GET /actuator/health` → `{"status":"UP"}` (RF-15). Por ahora se permite en público con una `SecurityFilterChain` mínima.
 
 **Commit:** `fase 1: configuración base`
 
@@ -112,12 +119,12 @@ com.academy.coworkhub
 
 Para cada recurso: DTO de entrada (`record` con `@NotBlank`, `@Positive`, …), DTO de salida, interfaz de servicio con su implementación, y controlador.
 
-- [ ] `/api/sedes`, `/api/equipamientos`, `/api/servicios-adicionales`, `/api/planes`: CRUD.
-- [ ] `/api/salas` con `?sedeId=` y una lista `equipmentIds` en la entrada.
-- [ ] `/api/miembros`: crear `Member` y `UserAccount` en **una misma transacción** (rol `MEMBER`, contraseña con BCrypt); filtros `nombre` y `estado`; `PATCH /suspender` y `/activar`.
-- [ ] RN-11: validar duplicados con `existsBy…` → `409` (además de la restricción en la base).
-- [ ] RN-12: antes de eliminar, verificar el uso (`existsByLocationId`, `existsByPlanId`, `existsByRoomId`, …) → `409`.
-- [ ] `DELETE` responde `200` sin cuerpo; `POST` responde `201`.
+- [x] `/api/sedes`, `/api/equipamientos`, `/api/servicios-adicionales`, `/api/planes`: CRUD.
+- [x] `/api/salas` con `?sedeId=` y una lista `equipmentIds` en la entrada.
+- [x] `/api/miembros`: crear `Member` y `UserAccount` en **una misma transacción** (rol `MEMBER`, contraseña con BCrypt); filtros `nombre` y `estado`; `PATCH /suspender` y `/activar`.
+- [x] RN-11: validar duplicados con `existsBy…` → `409` (además de la restricción en la base).
+- [x] RN-12: antes de eliminar, verificar el uso (`existsByLocationId`, `existsByPlanId`, `existsByRoomId`, …) → `409`.
+- [x] `DELETE` responde `200` sin cuerpo; `POST` responde `201`.
 
 **Commit:** `fase 3: catálogos y miembros`
 
@@ -184,38 +191,38 @@ Salas `active` de la sede, dentro del horario de la sede, sin cruce, con `capaci
 
 ### Fase 5 — Excepciones (módulo 07)
 
-- [ ] `BusinessRuleException(String codigo, String mensaje)` → `409`; `ResourceNotFoundException` → `404`; `DuplicateResourceException` → `409`.
-- [ ] `GlobalExceptionHandler` (`@RestControllerAdvice`):
+- [x] `BusinessRuleException(String codigo, String mensaje)` → `409`; `ResourceNotFoundException` → `404`; `DuplicateResourceException` → `409`.
+- [x] `GlobalExceptionHandler` (`@RestControllerAdvice`):
   - `MethodArgumentNotValidException`, `HttpMessageNotReadableException` y `MethodArgumentTypeMismatchException` → `400` (escenario 12).
   - `DataIntegrityViolationException` → `409` (respaldo de RN-11 y RN-12).
   - `AccessDeniedException` → `403`.
   - `Exception` → `500` genérico (no debería alcanzarlo ninguna regla de negocio).
-- [ ] Todas las respuestas con `ErrorResponse(error, codigo, timestamp)`.
+- [x] Todas las respuestas con `ErrorResponse(error, codigo, timestamp)`.
 
 **Commit:** `fase 5: manejo de excepciones`
 
 ### Fase 6 — Swagger (módulo 06) — RF-13
 
-- [ ] `OpenApiConfig`: `@OpenAPIDefinition` con título y descripción, y `@SecurityScheme(type = HTTP, scheme = "bearer", bearerFormat = "JWT")` para el botón **Authorize**.
-- [ ] Grupos con `GroupedOpenApi`: Autenticación, Catálogos, Miembros, Reservas.
-- [ ] En los controladores: `@Tag`, `@Operation`, `@ApiResponse` para 400/401/403/404/409 con el esquema `ErrorResponse`, y `@Schema(example=…)` en los DTO.
-- [ ] Exportar `docs/openapi.json` (`curl http://localhost:8084/v3/api-docs -o docs/openapi.json`).
+- [x] `OpenApiConfig`: `@OpenAPIDefinition` con título y descripción, y `@SecurityScheme(type = HTTP, scheme = "bearer", bearerFormat = "JWT")` para el botón **Authorize**.
+- [x] Grupos con `GroupedOpenApi`: Autenticación, Catálogos, Miembros, Reservas.
+- [x] En los controladores: `@Tag`, `@Operation`, `@ApiResponse` para 400/401/403/404/409 con el esquema `ErrorResponse`, y `@Schema(example=…)` en los DTO.
+- [x] Exportar `docs/openapi.json` (`curl http://localhost:8084/v3/api-docs -o docs/openapi.json`).
 
 **Commit:** `fase 6: documentación Swagger`
 
 ### Fase 7 — Seguridad (módulo 08) — RF-11, RF-12, RF-14, RN-13
 
 **7a. Basic Auth (commit propio, como pide el módulo):**
-- [ ] `UserDetailsServiceImpl` que lee `UserAccount` y concede la authority `ROLE_<role>`.
-- [ ] `SecurityFilterChain` con `httpBasic()`, `csrf` deshabilitado y `@EnableMethodSecurity`.
+- [x] `UserDetailsServiceImpl` que lee `UserAccount` y concede la authority `ROLE_<role>`.
+- [x] `SecurityFilterChain` con `httpBasic()`, `csrf` deshabilitado y `@EnableMethodSecurity`.
 
 **7b. JWT stateless:**
-- [ ] `POST /auth/login` → `AuthenticationManager.authenticate` → JWT HS256 que vence en 60 min, con los claims `sub=username`, `role` y `memberId` (`JwtEncoder` de Nimbus).
-- [ ] `oauth2ResourceServer().jwt()` con `JwtDecoder` del mismo secreto y un `JwtAuthenticationConverter` que mapea `role` a `ROLE_…`.
-- [ ] `SessionCreationPolicy.STATELESS`.
-- [ ] Públicos: `/auth/login`, `/actuator/health`, `/doc/**`, `/v3/api-docs/**`.
-- [ ] `GET /auth/perfil` → `{username, role, miembroId}`.
-- [ ] `AuthenticationEntryPoint` (`401`) y `AccessDeniedHandler` (`403`) que escriben `ErrorResponse` (escenario 10).
+- [x] `POST /auth/login` → `AuthenticationManager.authenticate` → JWT HS256 que vence en 60 min, con los claims `sub=username`, `role` y `memberId` (`JwtEncoder` de Nimbus).
+- [x] `oauth2ResourceServer().jwt()` con `JwtDecoder` del mismo secreto y un `JwtAuthenticationConverter` que mapea `role` a `ROLE_…`.
+- [x] `SessionCreationPolicy.STATELESS`.
+- [x] Públicos: `/auth/login`, `/actuator/health`, `/doc/**`, `/v3/api-docs/**`.
+- [x] `GET /auth/perfil` → `{username, role, miembroId}`.
+- [x] `AuthenticationEntryPoint` (`401`) y `AccessDeniedHandler` (`403`) que escriben `ErrorResponse` (escenario 10).
 
 **Permisos con `@PreAuthorize`:**
 - Catálogos: escritura `hasRole('ADMIN')`, lectura `isAuthenticated()`.
@@ -226,14 +233,39 @@ Salas `active` de la sede, dentro del horario de la sede, sin cruce, con `capaci
 
 ### Fase 8 — Pruebas y entregables
 
-- [ ] Tests unitarios (con `Clock` fijo) de `CostCalculator`, de la cancelación (30 h / 5 h / 1 h) y de RN-02 y RN-03.
-- [ ] Test de integración de la concurrencia de RN-01 (escenario 13).
-- [ ] Tests con `@WebMvcTest` o `MockMvc` para 401 y 403 (escenarios 9 y 10).
-- [ ] Colección de Postman con los **14 escenarios**: login como `admin`, `recepcion` y un miembro, guardando el token en una variable de la colección. Guardarla en `docs/coworkhub.postman_collection.json`.
-- [ ] `docs/openapi.json` actualizado.
-- [ ] `README.md`: base con Docker o con MySQL instalado, `mvn spring-boot:run`, usuarios y contraseñas de prueba, y la URL `http://localhost:8084/doc/swagger-ui.html`.
+- [x] Tests unitarios (con `Clock` fijo) de `CostCalculator`, de la cancelación (30 h / 5 h / 1 h) y de RN-02 y RN-03.
+- [x] Test de integración de la concurrencia de RN-01 (escenario 13).
+- [x] Tests con `@WebMvcTest` o `MockMvc` para 401 y 403 (escenarios 9 y 10).
+- [x] Colección de Postman con los **14 escenarios**: login como `admin`, `recepcion` y un miembro, guardando el token en una variable de la colección. Guardarla en `docs/coworkhub.postman_collection.json`.
+- [x] `docs/openapi.json` actualizado.
+- [x] `README.md`: base con Docker o con MySQL instalado, `mvn spring-boot:run`, usuarios y contraseñas de prueba, y la URL `http://localhost:8084/doc/swagger-ui.html`.
 
 **Commit:** `fase 8: pruebas y documentación`
+
+### Fase 9 — Panel web (frontend)
+
+No lo pide `requerimientos.md` ("No hay interfaz gráfica"), pero sí la lista de entregables posterior ("Código fuente del frontend y backend").
+
+- [x] HTML, CSS y JavaScript sin frameworks en `src/main/resources/static/` (`index.html`, `styles.css`, `app.js`): Spring Boot los sirve en `http://localhost:8084/`, en el mismo origen que la API, así que no hace falta CORS.
+- [x] Login con `POST /auth/login`; token en `sessionStorage`; vuelve al login ante un `401`.
+- [x] Menú según el rol (`/auth/perfil`): el `MEMBER` no ve Miembros, Equipamiento ni Servicios adicionales; solo el `ADMIN` edita catálogos.
+- [x] Vistas: inicio (consumo del miembro o reservas por confirmar), disponibilidad, reservas (crear, detalle, servicios, confirmar, completar, cancelar), miembros y CRUD de catálogos.
+- [x] `SecurityConfig`: `GET /`, `/index.html`, `/app.js` y `/styles.css` públicos; los datos siguen con JWT.
+- [x] Test de que el panel carga sin token (`SecurityTest`).
+- [x] Corrección tras la prueba manual: "Ver" no abría el detalle de reservas no pendientes, y tras confirmar el detalle quedaba desactualizado (`addForm?.` sobre `false`).
+
+**Commit sugerido:** `fase 9: panel web`
+
+---
+
+## 2.1. Decisiones que se apartaron del plan
+
+| Plan | Qué se hizo | Por qué |
+|---|---|---|
+| Fase 7: al crear una reserva, si el rol es `MEMBER`, se fuerza `memberId` al del token | Responde `403` si un `MEMBER` reserva a nombre de otro | `requerimientos.md` §5: "Si pide los de otro miembro, recibe `403`". |
+| Fase 4: un `CostCalculator` único | El cálculo vive en un método privado de `BookingServiceImpl` que reusan crear, servicios y consumo | Mismo efecto (una sola regla) sin una clase extra; lo cubre el escenario 1 de `BookingServiceTest`. |
+| Fase 6/8: `docs/openapi.json` desde `/v3/api-docs` | Se exporta desde `/v3/api-docs/todo` | Con grupos de springdoc, el grupo "todo" contiene toda la API. |
+| Lista de entregables: `migration.sql` en `resources` | Los datos siguen en `import.sql` | Decisión del autor: no cambiar el nombre; `requerimientos.md` exige `import.sql`. |
 
 ---
 
@@ -258,7 +290,7 @@ Salas `active` de la sede, dentro del horario de la sede, sin cruce, con `capaci
 ## 4. Riesgos y decisiones abiertas
 
 - **`ddl-auto=create` borra los datos** en cada arranque: es lo esperado según el requerimiento, pero ningún dato cargado a mano sobrevive.
-- **Boot 4.1 + springdoc 3.2.1:** verificar al arrancar que Swagger UI cargue; si falla, ajustar la versión de springdoc.
+- **Boot 4.1 + springdoc 3.2.1:** ✅ verificado: Swagger UI carga y el `openapi.json` se exporta.
 - **Zona horaria:** la base, el `Clock` y `CURDATE()` tienen que coincidir. Fijar `spring.jpa.properties.hibernate.jdbc.time_zone` y la zona del `Clock`.
 - **Horas "devueltas" al cancelar (RN-08):** se modela excluyendo las reservas `CANCELLED` del consumo. Con la cancelación tardía se cobra el 50 % y las horas tampoco cuentan; confirmar esta interpretación con la rúbrica.
 - **Falta `rubrica.md`:** pedirla para validar los criterios finos.

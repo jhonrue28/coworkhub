@@ -96,6 +96,8 @@ class SecurityTest {
     @Test
     void publicos_sinCredenciales() throws Exception {
         mvc.perform(get("/actuator/health")).andExpect(status().isOk());
+        mvc.perform(get("/app.js")).andExpect(status().isOk());
+        mvc.perform(get("/index.html")).andExpect(status().isOk());
     }
 
     @Test
